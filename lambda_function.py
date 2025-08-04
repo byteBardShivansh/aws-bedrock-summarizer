@@ -161,3 +161,70 @@ def test_local():
 
 if __name__ == "__main__":
     test_local()
+import json
+import boto3
+import logging
+
+# Configure logging
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+# Initialize Bedrock client
+bedrock_runtime = boto3.client('bedrock-runtime', region_name='us-east-1')
+
+def lambda_handler(event, context):
+    """
+    Lambda function to invoke Meta's Llama 3 model via Amazon Bedrock
+    """
+    try:
+        # Extract prompt from event
+        prompt = event.get('prompt', 'Hello, how are you?')
+        
+        # Prepare the request body for Llama 3
+        request_body = {
+            "prompt": prompt,
+            "max_gen_len": 512,
+            "temperature": 0.7,
+            "top_p": 0.9
+        }
+        
+        # Invoke the Llama 3 model
+        response = bedrock_runtime.invoke_model(
+            modelId='meta.llama3-8b-instruct-v1:0',
+            contentType='application/json',
+            accept='application/json',
+            body=json.dumps(request_body)
+        )
+        
+        # Parse the response
+        response_body = json.loads(response['body'].read())
+        generated_text = response_body.get('generation', '')
+        
+        logger.info(f"Successfully generated response for prompt: {prompt[:50]}...")
+        
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({
+                'prompt': prompt,
+                'response': generated_text,
+                'model': 'meta.llama3-8b-instruct-v1:0'
+            })
+        }
+        
+    except Exception as e:
+        logger.error(f"Error invoking Bedrock model: {str(e)}")
+        return {
+            'statusCode': 500,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({
+                'error': 'Failed to generate response',
+                'message': str(e)
+            })
+        }

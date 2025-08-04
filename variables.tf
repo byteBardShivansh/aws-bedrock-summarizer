@@ -25,3 +25,30 @@ variable "tags" {
     ManagedBy   = "terraform"
   }
 }
+variable "aws_region" {
+  description = "AWS region for resources"
+  type        = string
+  default     = "us-east-1"
+}
+
+variable "function_name" {
+  description = "Name of the Lambda function"
+  type        = string
+  default     = "bedrock-llama3-function"
+}
+
+variable "log_retention_days" {
+  description = "CloudWatch log retention in days"
+  type        = number
+  default     = 14
+}
+
+variable "tags" {
+  description = "Tags to apply to resources"
+  type        = map(string)
+  default = {
+    Environment = "dev"
+    Project     = "bedrock-lambda"
+    ManagedBy   = "terraform"
+  }
+}
